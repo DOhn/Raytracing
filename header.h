@@ -16,8 +16,8 @@
 // const uint8_t PLANE = 2;
 // const uint8_t LIGHT = 3;
 
-typedef struct { 
-  float r, g, b; 
+typedef struct {
+  float r, g, b;
 } Color;
 
 typedef struct {
@@ -32,28 +32,32 @@ typedef struct {
     struct {
       Color diffuse;
       Color specular;
-      
+
       double position[3];
       double radius;
+
+      double reflect;
+      double refract;
+      double ior;
     } Sphere;
 
     struct {
       Color diffuse;
       Color specular;
-      
+
       double normal[3];
       double position[3];
     } Plane;
-    
+
     struct {
       Color color;
-      
+
       double theta;
       double angular_a0;
       double dirction[3];
       double radial_a0;
       double radial_a1;
-      double radial_a2;      
+      double radial_a2;
       double position[3];
     } Light;
   };
