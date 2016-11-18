@@ -112,20 +112,20 @@ Obj **read_scene(char *filename) {
     fprintf(stderr, "Error: Could not open file \"%s\"\n", filename);
     exit(1);
   }
-  
+
   Obj **objs;
   objs = malloc(sizeof(Obj *) * objNum);
-  
+
   skip_ws(fput);
-  
+
   // Getting the beginning of the list to parse
   expect_c(fput, '[');
   skip_ws(fput);
-  
+
   size_t currentObj = 0;
   while (1) {
     objs[currentObj] = malloc(sizeof(Obj));
-    
+
     c = fgetc(fput);
     if (c == ']') {
       fprintf(stderr, "Error: This is the worst scene file EVER.\n");
@@ -134,7 +134,7 @@ Obj **read_scene(char *filename) {
     }
     if (c == '{') {
       skip_ws(fput);
-      
+
       // Parse the object
       char *key = next_string(fput);
       if (strcmp(key, "type") != 0) {
@@ -142,13 +142,13 @@ Obj **read_scene(char *filename) {
                 line);
         exit(1);
       }
-      
+
       skip_ws(fput);
       expect_c(fput, ':');
       skip_ws(fput);
-      
+
       char *value = next_string(fput);
-      
+
       if (strcmp(value, "camera") == 0) {
         objs[currentObj]->type = 0;
       } else if (strcmp(value, "sphere") == 0) {
@@ -162,9 +162,9 @@ Obj **read_scene(char *filename) {
                 value, line);
         exit(1);
       }
-      
+
       skip_ws(fput);
-      
+
       while (1) {
         c = next_c(fput);
         if (c == '}') {
@@ -177,9 +177,9 @@ Obj **read_scene(char *filename) {
           skip_ws(fput);
           expect_c(fput, ':');
           skip_ws(fput);
-          
+
           // Start storing values
-          
+
           // Scaler types
           if (strcmp(key, "width") == 0) {
             double value = next_number(fput);
@@ -189,9 +189,9 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
+
             objs[currentObj]->Camera.width = value;
-            
+
           } else if (strcmp(key, "height") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -200,9 +200,9 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
+
             objs[currentObj]->Camera.height = value;
-            
+
           } else if (strcmp(key, "radius") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -211,14 +211,14 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
+
             objs[currentObj]->Sphere.radius = value;
-            
+
           } else if (strcmp(key, "theta") == 0) {
             double value = next_number(fput);
             value = fmod(value, (2.0 * M_PI));
             objs[currentObj]->Light.theta = value;
-            
+
           } else if (strcmp(key, "angular-a0") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -227,10 +227,10 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
-            
+
+
             objs[currentObj]->Light.angular_a0 = value;
-            
+
           } else if (strcmp(key, "radial-a0") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -239,10 +239,10 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
-            
+
+
             objs[currentObj]->Light.angular_a0 = value;
-            
+
           } else if (strcmp(key, "radial-a1") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -251,9 +251,9 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
+
             objs[currentObj]->Light.radial_a1 = value;
-            
+
           } else if (strcmp(key, "radial-a2") == 0) {
             double value = next_number(fput);
             if (value < 0) {
@@ -262,11 +262,31 @@ Obj **read_scene(char *filename) {
                       value, line);
               exit(1);
             }
-            
+
             objs[currentObj]->Light.radial_a2 = value;
-            
+
+          // Reflectivity, Refraction, and ior
+          } else if (strcmp(key, "reflectivity") == 0) {
+            double value = next_number(fput);
+            if (value > 1 || value < 0) {
+              fprintf(stderr, "Error: Reflectivity must be between 0 - 1."
+                " Currently it is %.2f on line %d\n.", value, line);
+                exit(1);
+            }
+            objs[currentObj]->Sphere.reflect = value;
+          } else if (strcmp(key, "refractivity") == 0) {
+            double value = next_number(fput);
+            if (value > 1 || value < 0) {
+              fprintf(stderr, "Error: Refactivity must be between 0 - 1."
+                " Currently it is %.2f on line %d\n.", value, line);
+                exit(1);
+            }
+            objs[currentObj]->Sphere.refract = value;
+          } else if (strcmp(key, "ior") == 0) {
+            double value = next_number(fput);
+            objs[currentObj]->Sphere.ior = value;
           }
-          
+
           // Vector types
           else if (strcmp(key, "color") == 0) {
             double *value = next_vector(fput);
@@ -276,28 +296,29 @@ Obj **read_scene(char *filename) {
                       line);
               exit(1);
             }
-            
+
             if (objs[currentObj]->type != 3) {
               fprintf(stderr, "Error: Object does not support a plain color attribute. "
                       "On line number %d.\n",
                       line);
               exit(1);
             }
-            
-            
+
+
             objs[currentObj]->Light.color.r = value[0];
             objs[currentObj]->Light.color.g = value[1];
             objs[currentObj]->Light.color.b = value[2];
+
           } else if (strcmp(key, "specular_color") == 0) {
             double *value = next_vector(fput);
-            
+
             if (value[0] < 0 || value[1] < 0 || value[2] < 0) {
               fprintf(stderr, "Error: color values cannot be less than 0. "
                       "On line number %d.\n",
                       line);
               exit(1);
             }
-            
+
             if (objs[currentObj]->type == 1) {
               objs[currentObj]->Sphere.specular.r = value[0];
               objs[currentObj]->Sphere.specular.g = value[1];
@@ -312,17 +333,17 @@ Obj **read_scene(char *filename) {
                       line);
               exit(1);
             }
-            
+
           } else if (strcmp(key, "diffuse_color") == 0) {
             double *value = next_vector(fput);
-            
+
             if (value[0] < 0 || value[1] < 0 || value[2] < 0) {
               fprintf(stderr, "Error: color values cannot be less than 0. "
                       "On line number %d.\n",
                       line);
               exit(1);
             }
-            
+
             if (objs[currentObj]->type == 1) {
               objs[currentObj]->Sphere.diffuse.r = value[0];
               objs[currentObj]->Sphere.diffuse.g = value[1];
@@ -337,10 +358,10 @@ Obj **read_scene(char *filename) {
                       line);
               exit(1);
             }
-            
+
           } else if (strcmp(key, "position") == 0) {
             double *value = next_vector(fput);
-            
+
             if (objs[currentObj]->type == 2) {
               v3_cpy(objs[currentObj]->Plane.position, value);
             } else if (objs[currentObj]->type == 1) {
@@ -359,14 +380,14 @@ Obj **read_scene(char *filename) {
                     key, line);
             exit(1);
           }
-          
+
           skip_ws(fput);
         } else {
           fprintf(stderr, "Error: Unexpected value on line %d\n", line);
           exit(1);
         }
       }
-      
+
       skip_ws(fput);
       c = next_c(fput);
       if (c == ',') {
