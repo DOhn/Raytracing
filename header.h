@@ -17,11 +17,16 @@
 // const uint8_t LIGHT = 3;
 
 typedef struct {
-  float r, g, b;
+  unsigned char r, g, b;
 } Color;
 
 typedef struct {
   int type;
+  double* diffuse;
+  double* specular;
+  double refractivity;
+  double reflectivity;
+  double refracIndex;
 
   union {
     struct {
@@ -30,40 +35,31 @@ typedef struct {
     } Camera;
 
     struct {
-      Color diffuse;
-      Color specular;
-
-      double position[3];
+      double* position;
       double radius;
-
-      double reflect;
-      double refract;
-      double ior;
     } Sphere;
 
     struct {
-      Color diffuse;
-      Color specular;
-
-      double normal[3];
-      double position[3];
+      double* normal;
+      double* position;
     } Plane;
 
     struct {
-      Color color;
-
       double theta;
       double angular_a0;
-      double dirction[3];
+      double* direct;
       double radial_a0;
       double radial_a1;
       double radial_a2;
-      double position[3];
+      double* position;
     } Light;
   };
 } Obj;
 
-Obj **read_scene(char *filename);
+static double* renderColor(int dp, double* Ro, double* Rd, Obj** objs, Obj** light);
+Obj **read_scene(char *, Obj** light);
 void normalize(double *v);
 double intersection_dist(V3 Ro, V3 Rd, Obj* obj);
+void specular(double* specColor, double* norm, double* lightDirect, Obj* obj, double* lightCol, double* Rd);
+void diffuse(double* totalDiffuse, double* norm, double* lightDirect, Obj* obj, double* lightCol);
 #endif
